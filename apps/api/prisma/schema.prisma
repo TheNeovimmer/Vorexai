@@ -1,0 +1,534 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id               String            @id @default(cuid())
+  fullName         String
+  email            String            @unique
+  password         String
+  role             Role[]
+  isVerifiedSeller Boolean           @default(false)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  isVerifiedDriver Boolean           @default(false)
+  driver           Driver?
+  seller           Seller?
+  warehouseManager WarehouseManager?
+  notifications    Notification[]  
+  isEmailVerified  Boolean           @default(false)
+  verificationToken String?
+  resetPasswordToken String?
+  resetPasswordExpires DateTime?
+}
+
+model Notification {
+  id           String    @id @default(cuid())
+  userId       String
+  type         String    // Store as string instead of enum
+  title        String
+  message      String
+  isRead       Boolean   @default(false)
+  data         Json?     // For additional data related to the notification
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  user         User      @relation(fields: [userId], references: [id])
+  order        Order?    @relation(fields: [orderId], references: [id])
+  orderId      String?
+}
+
+model Seller {
+  id              String    @id @default(cuid())
+  userId          String    @unique
+  apiKey          String?   @unique
+  businessName    String
+  businessType    String
+  description     String?
+  hasRegistration Boolean   @default(false)
+  registrationNo  String?
+  taxId           String?
+  address         String
+  city            String
+  postalCode      String
+  governorate     String
+  phone           String
+  isVerified      Boolean   @default(false)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  latitude        Float?
+  longitude       Float?
+  orders          Order[]
+  products        Product[]
+  user            User      @relation(fields: [userId], references: [id])
+  apiLogs         ApiLog[]
+}
+
+model Product {
+  id          String      @id @default(cuid())
+  sellerId    String
+  name        String
+  description String?
+  price       Float
+  stock       Int
+  sku         String      @unique
+  weight      Float?
+  dimensions  String?
+  category    String
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  orderItems  OrderItem[]
+  seller      Seller      @relation(fields: [sellerId], references: [id])
+}
+
+model Order {
+  id                   String      @id @default(cuid())
+  sellerId             String
+  warehouseId          String?
+  status               OrderStatus @default(PENDING)
+  totalAmount          Float
+  deliveryPrice        Float       @default(0)
+  address              String
+  city                 String
+  governorate          String
+  postalCode           String
+  phone                String
+  customerName         String
+  customerEmail        String
+  notes                String?
+  createdAt            DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
+  pickupLatitude       Float?
+  pickupLongitude      Float?
+  dropLatitude         Float?
+  dropLongitude        Float?
+  isLocalDelivery      Boolean     @default(false)
+  batchId              String?
+  secondaryWarehouseId String?
+  estimatedDeliveryTime DateTime?
+  batch                Batch?      @relation(fields: [batchId], references: [id])
+  seller               Seller      @relation(fields: [sellerId], references: [id])
+  warehouse            Warehouse?  @relation(fields: [warehouseId], references: [id])
+  items                OrderItem[]
+  rating               Rating?
+  refund               Refund?
+  routeStops           RouteStop[]
+  notifications        Notification[]
+  driverEarnings       DriverEarnings[]
+}
+
+model OrderItem {
+  id            String   @id @default(cuid())
+  orderId       String
+  productId     String
+  quantity      Int
+  price         Float
+  weight        Float
+  dimensions    String
+  packagingType String?
+  fragile       Boolean  @default(false)
+  perishable    Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  order         Order    @relation(fields: [orderId], references: [id])
+  product       Product  @relation(fields: [productId], references: [id])
+}
+
+model WarehouseManager {
+  id                String           @id @default(cuid())
+  userId            String           @unique
+  warehouseId       String
+  employeeId        String           @unique
+  securityClearance SecurityLevel
+  shiftPreference   ShiftType
+  emergencyContact  String
+  specializations   String[]
+  notes             String?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  inventoryAudits   InventoryAudit[]
+  staffSchedules    StaffSchedule[]
+  user              User             @relation(fields: [userId], references: [id])
+  warehouse         Warehouse        @relation(fields: [warehouseId], references: [id])
+}
+
+model Warehouse {
+  id                  String             @id @default(cuid())
+  name                String
+  address             String
+  city                String
+  governorate         String
+  postalCode          String
+  phone               String
+  capacity            Float
+  currentLoad         Float
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+  latitude            Float
+  longitude           Float
+  coverageGovernorate String[]
+  batches             Batch[]
+  outgoingRoutes      DeliveryRoute[]    @relation("FromWarehouse")
+  incomingRoutes      DeliveryRoute[]    @relation("ToWarehouse")
+  orders              Order[]
+  routeStops          RouteStop[]
+  managers            WarehouseManager[]
+  sections            WarehouseSection[]
+}
+
+model WarehouseSection {
+  id          String    @id @default(cuid())
+  warehouseId String
+  name        String
+  description String?
+  capacity    Float
+  currentLoad Float
+  sectionType String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  piles       Pile[]
+  warehouse   Warehouse @relation(fields: [warehouseId], references: [id])
+}
+
+model Pile {
+  id          String           @id @default(cuid())
+  sectionId   String
+  name        String
+  description String?
+  capacity    Float
+  currentLoad Float
+  pileType    String
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  section     WarehouseSection @relation(fields: [sectionId], references: [id])
+}
+
+model Driver {
+  id               String          @id @default(cuid())
+  userId           String          @unique
+  licenseNumber    String          @unique
+  licenseType      LicenseType
+  licenseExpiry    DateTime
+  vehicleId        String?         @unique
+  address          String
+  city             String
+  postalCode       String
+  governorate      String
+  phone            String
+  emergencyContact String
+  rating           Float           @default(0)
+  totalDeliveries  Int             @default(0)
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  batches          Batch[]
+  routes           DeliveryRoute[]
+  user             User            @relation(fields: [userId], references: [id])
+  vehicle          Vehicle?        @relation(fields: [vehicleId], references: [id])
+  availabilityStatus DriverStatus    @default(ONLINE)
+  earnings         DriverEarnings[]
+}
+
+model Vehicle {
+  id                 String              @id @default(cuid())
+  plateNumber        String              @unique
+  type               VehicleType
+  make               String
+  model              String
+  year               Int
+  capacity           Float
+  maxWeight          Float
+  currentStatus      VehicleStatus
+  lastMaintenance    DateTime
+  nextMaintenance    DateTime
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  odometer           Int                 @default(0)
+  driver             Driver?
+  insuranceInfo      InsuranceInfo?
+  maintenanceRecords MaintenanceRecord[]
+  issues             VehicleIssue[]
+}
+
+model InsuranceInfo {
+  id           String   @id @default(cuid())
+  vehicleId    String   @unique
+  provider     String
+  policyNumber String
+  startDate    DateTime
+  endDate      DateTime
+  coverage     String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  vehicle      Vehicle  @relation(fields: [vehicleId], references: [id])
+}
+
+model DeliveryRoute {
+  id                String      @id @default(cuid())
+  driverId          String?
+  fromWarehouseId   String?
+  status            RouteStatus @default(PENDING)
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  batchId           String      @unique
+  completedAt       DateTime?
+  estimatedDuration Int
+  startedAt         DateTime?
+  toWarehouseId     String?
+  totalDistance     Float
+  batch             Batch       @relation(fields: [batchId], references: [id])
+  driver            Driver?     @relation(fields: [driverId], references: [id])
+  fromWarehouse     Warehouse?  @relation("FromWarehouse", fields: [fromWarehouseId], references: [id])
+  toWarehouse       Warehouse?  @relation("ToWarehouse", fields: [toWarehouseId], references: [id])
+  stops             RouteStop[]
+  driverEarnings    DriverEarnings[]
+}
+
+model RouteStop {
+  id            String        @id @default(cuid())
+  routeId       String
+  orderId       String?
+  warehouseId   String?
+  address       String
+  latitude      Float
+  longitude     Float
+  isPickup      Boolean
+  sequenceOrder Int
+  isCompleted   Boolean       @default(false)
+  completedAt   DateTime?
+  notes         String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  order         Order?        @relation(fields: [orderId], references: [id])
+  route         DeliveryRoute @relation(fields: [routeId], references: [id])
+  warehouse     Warehouse?    @relation(fields: [warehouseId], references: [id])
+}
+
+model InventoryAudit {
+  id          String           @id @default(cuid())
+  managerId   String
+  warehouseId String
+  date        DateTime
+  findings    String
+  action      String
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  manager     WarehouseManager @relation(fields: [managerId], references: [id])
+}
+
+model StaffSchedule {
+  id          String           @id @default(cuid())
+  managerId   String
+  warehouseId String
+  startTime   DateTime
+  endTime     DateTime
+  staffCount  Int
+  notes       String?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  manager     WarehouseManager @relation(fields: [managerId], references: [id])
+}
+
+model Rating {
+  id        String   @id @default(cuid())
+  orderId   String   @unique
+  score     Int
+  comment   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  order     Order    @relation(fields: [orderId], references: [id])
+}
+
+model Refund {
+  id        String       @id @default(cuid())
+  orderId   String       @unique
+  status    RefundStatus
+  amount    Float
+  reason    String
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  order     Order        @relation(fields: [orderId], references: [id])
+}
+
+model Batch {
+  id            String         @id @default(cuid())
+  type          BatchType
+  status        BatchStatus    @default(COLLECTING)
+  warehouseId   String
+  driverId      String?
+  routeId       String?        @unique
+  totalWeight   Float
+  totalVolume   Float
+  orderCount    Int
+  vehicleType   VehicleType
+  scheduledTime DateTime?
+  completedTime DateTime?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  driver        Driver?        @relation(fields: [driverId], references: [id])
+  warehouse     Warehouse      @relation(fields: [warehouseId], references: [id])
+  route         DeliveryRoute?
+  orders        Order[]
+  driverEarnings DriverEarnings[]
+}
+
+model MaintenanceRecord {
+  id          String   @id @default(cuid())
+  type        String
+  date        DateTime
+  odometer    Int
+  description String
+  cost        Float
+  status      String
+  vehicleId   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  vehicle     Vehicle  @relation(fields: [vehicleId], references: [id])
+}
+
+model VehicleIssue {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  reportedAt  DateTime @default(now())
+  status      String   @default("PENDING")
+  priority    String
+  vehicleId   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  vehicle     Vehicle  @relation(fields: [vehicleId], references: [id])
+}
+
+model DriverEarnings {
+  id            String   @id @default(cuid())
+  driverId      String
+  orderId       String
+  routeId       String?
+  batchId       String?
+  baseAmount    Float
+  bonusAmount   Float
+  totalAmount   Float
+  percentage    Float    @default(70) // Default percentage for driver
+  status        PaymentStatus @default(PENDING)
+  paidAt        DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  driver        Driver   @relation(fields: [driverId], references: [id])
+  order         Order    @relation(fields: [orderId], references: [id])
+  route         DeliveryRoute? @relation(fields: [routeId], references: [id])
+  batch         Batch?   @relation(fields: [batchId], references: [id])
+}
+
+model ApiLog {
+  id           String   @id @default(cuid())
+  sellerId     String
+  endpoint     String
+  status       Int
+  responseTime Int
+  timestamp    DateTime @default(now())
+  seller       Seller   @relation(fields: [sellerId], references: [id])
+}
+
+enum Role {
+  ADMIN
+  SELLER
+  WAREHOUSE_MANAGER
+  DRIVER
+}
+
+enum SecurityLevel {
+  BASIC
+  INTERMEDIATE
+  ADVANCED
+  MASTER
+}
+
+enum ShiftType {
+  MORNING
+  AFTERNOON
+  NIGHT
+  FLEXIBLE
+}
+
+enum LicenseType {
+  A
+  B
+  C
+  D
+  E
+}
+
+enum DriverStatus {
+  ONLINE
+  OFFLINE
+  BUSY
+  ON_BREAK
+}
+
+enum VehicleType {
+  MOTORCYCLE
+  CAR
+  VAN
+  SMALL_TRUCK
+  LARGE_TRUCK
+}
+
+enum VehicleStatus {
+  ACTIVE
+  MAINTENANCE
+  REPAIR
+  OUT_OF_SERVICE
+}
+
+enum OrderStatus {
+  PENDING
+  LOCAL_ASSIGNED_TO_PICKUP
+  LOCAL_PICKED_UP
+  LOCAL_DELIVERED
+  CITY_ASSIGNED_TO_PICKUP
+  CITY_PICKED_UP
+  CITY_ARRIVED_AT_SOURCE_WAREHOUSE
+  CITY_READY_FOR_INTERCITY_TRANSFER
+  CITY_READY_FOR_INTERCITY_TRANSFER_BATCHED
+  CITY_IN_TRANSIT_TO_DESTINATION_WAREHOUSE
+  CITY_ARRIVED_AT_DESTINATION_WAREHOUSE
+  CITY_READY_FOR_LOCAL_DELIVERY
+  CITY_READY_FOR_LOCAL_DELIVERY_BATCHED
+  CITY_DELIVERED
+  CANCELLED
+}
+
+enum RouteStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+}
+
+enum RefundStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum BatchType {
+  LOCAL_PICKUP
+  LOCAL_SELLERS_WAREHOUSE
+  LOCAL_WAREHOUSE_BUYERS
+  INTERCITY
+}
+
+enum BatchStatus {
+  COLLECTING
+  PROCESSING
+  COMPLETED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  CANCELLED
+}

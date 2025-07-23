@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vehicle AI Assistant</title>
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --background-color: #f8fafc;
+            --text-color: #1e293b;
+            --border-color: #e2e8f0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            color: #64748b;
+        }
+
+        .chat-container {
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .chat-messages {
+            height: 400px;
+            overflow-y: auto;
+            margin-bottom: 1rem;
+            padding: 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+        }
+
+        .message {
+            margin-bottom: 1rem;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            max-width: 80%;
+        }
+
+        .user-message {
+            background-color: var(--primary-color);
+            color: white;
+            margin-left: auto;
+        }
+
+        .assistant-message {
+            background-color: #f1f5f9;
+            margin-right: auto;
+        }
+
+        .input-container {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            font-size: 1rem;
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: #1d4ed8;
+        }
+
+        .status {
+            text-align: center;
+            color: #64748b;
+            margin-top: 1rem;
+        }
+
+        .voice-controls {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .voice-button {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background-color: #f1f5f9;
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .voice-button:hover {
+            background-color: #e2e8f0;
+        }
+
+        .voice-button.active {
+            background-color: #dc2626;
+            color: white;
+            border-color: #dc2626;
+        }
+
+        .voice-button svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .voice-status {
+            font-size: 0.875rem;
+            color: #64748b;
+            margin-top: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Vehicle AI Assistant</h1>
+            <p>Your intelligent vehicle maintenance and diagnostics companion</p>
+        </div>
+
+        <div class="chat-container">
+            <div class="voice-controls">
+                <button class="voice-button" id="start-listening">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M8.25 4.5a3.75 3.75 0 117.5 0v8.25a3.75 3.75 0 11-7.5 0V4.5z" />
+                        <path d="M6 10.5a.75.75 0 01.75.75v1.5a5.25 5.25 0 1010.5 0v-1.5a.75.75 0 011.5 0v1.5a6.751 6.751 0 01-6 6.709v2.291h3a.75.75 0 010 1.5h-7.5a.75.75 0 010-1.5h3v-2.291a6.751 6.751 0 01-6-6.709v-1.5A.75.75 0 016 10.5z" />
+                    </svg>
+                    Start Listening
+                </button>
+                <button class="voice-button" id="stop-listening" disabled>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M8.25 4.5a3.75 3.75 0 117.5 0v8.25a3.75 3.75 0 11-7.5 0V4.5z" />
+                        <path d="M6 10.5a.75.75 0 01.75.75v1.5a5.25 5.25 0 1010.5 0v-1.5a.75.75 0 011.5 0v1.5a6.751 6.751 0 01-6 6.709v2.291h3a.75.75 0 010 1.5h-7.5a.75.75 0 010-1.5h3v-2.291a6.751 6.751 0 01-6-6.709v-1.5A.75.75 0 016 10.5z" />
+                    </svg>
+                    Stop Listening
+                </button>
+            </div>
+            <div class="voice-status" id="voice-status">Click "Start Listening" to begin voice interaction</div>
+
+            <div class="chat-messages" id="chat-messages">
+                <!-- Messages will be dynamically added here -->
+            </div>
+            
+            <div class="input-container">
+                <input type="text" id="user-input" placeholder="Ask about your vehicle..." />
+                <button id="send-button">Send</button>
+            </div>
+            
+            <div class="status" id="status">
+                Ready to assist
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const chatMessages = document.getElementById('chat-messages');
+        const userInput = document.getElementById('user-input');
+        const sendButton = document.getElementById('send-button');
+        const status = document.getElementById('status');
+        const startListeningBtn = document.getElementById('start-listening');
+        const stopListeningBtn = document.getElementById('stop-listening');
+        const voiceStatus = document.getElementById('voice-status');
+
+        let recognition = null;
+        let synthesis = window.speechSynthesis;
+
+        // Initialize speech recognition
+        if ('webkitSpeechRecognition' in window) {
+            recognition = new webkitSpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = false;
+            recognition.lang = 'en-US';
+
+            recognition.onstart = () => {
+                startListeningBtn.disabled = true;
+                stopListeningBtn.disabled = false;
+                voiceStatus.textContent = 'Listening...';
+                startListeningBtn.classList.add('active');
+            };
+
+            recognition.onend = () => {
+                startListeningBtn.disabled = false;
+                stopListeningBtn.disabled = true;
+                voiceStatus.textContent = 'Click "Start Listening" to begin voice interaction';
+                startListeningBtn.classList.remove('active');
+            };
+
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                userInput.value = transcript;
+                sendMessage();
+            };
+
+            recognition.onerror = (event) => {
+                console.error('Speech recognition error:', event.error);
+                voiceStatus.textContent = `Error: ${event.error}`;
+            };
+        } else {
+            voiceStatus.textContent = 'Speech recognition not supported in this browser';
+            startListeningBtn.disabled = true;
+        }
+
+        function speak(text) {
+            if (synthesis.speaking) {
+                synthesis.cancel();
+            }
+            
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.rate = 1;
+            utterance.pitch = 1;
+            synthesis.speak(utterance);
+        }
+
+        function addMessage(text, isUser = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user-message' : 'assistant-message'}`;
+            messageDiv.textContent = text;
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            if (!isUser) {
+                speak(text);
+            }
+        }
+
+        async function sendMessage() {
+            const message = userInput.value.trim();
+            if (!message) return;
+
+            addMessage(message, true);
+            userInput.value = '';
+            status.textContent = 'Processing...';
+
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ message }),
+                });
+
+                const data = await response.json();
+                addMessage(data.response);
+                status.textContent = 'Ready to assist';
+            } catch (error) {
+                console.error('Error:', error);
+                addMessage('Sorry, there was an error processing your request.');
+                status.textContent = 'Error occurred';
+            }
+        }
+
+        startListeningBtn.addEventListener('click', () => {
+            recognition.start();
+        });
+
+        stopListeningBtn.addEventListener('click', () => {
+            recognition.stop();
+        });
+
+        sendButton.addEventListener('click', sendMessage);
+        userInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+</html> 
