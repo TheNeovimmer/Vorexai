@@ -1,3 +1,8 @@
+/**
+ * Vorex - Main Application Component
+ * Author: TheNeovimmer
+ */
+
 import { ThemeProvider } from "@/components/theme-provider";
 import { BrowserRouter } from "react-router-dom";
 import { AppRoutes } from "./routes/route";

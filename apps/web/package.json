@@ -1,7 +1,8 @@
 {
-  "name": "web",
+  "name": "vorex-web",
+  "author": "TheNeovimmer",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "bun run vite --host",
