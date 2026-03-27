@@ -49,7 +49,7 @@ export function MainHomePage() {
           <div className="relative z-10 w-full max-w-6xl mx-auto mt-16 rounded-t-xl overflow-hidden shadow-2xl border border-border">
             <div className="h-[600px] overflow-hidden rounded-t-xl">
               <img
-                src="https://i.ibb.co/TMbtfFxn/Screenshot-2025-05-30-110220.png"
+                src="https://f56mdiqn9v.ufs.sh/f/9LjNuV21boChULE2SLl6r7iSfHbLoOQtaMDEB1g4ZzxNvTu3"
                 alt="Dashboard Preview"
                 className="w-full object-cover object-top"
               />
@@ -66,7 +66,7 @@ export function MainHomePage() {
             <path d="M0,64 C360,100 1080,0 1440,64 L1440,160 L0,160 Z" fill="hsl(var(--card))" /> {/* Tailwind bg-muted */}
           </svg>
         </div>
-        
+
       </section>
       {/* NEXT SECTION */}
       <section className="bg-muted text-foreground  py-10 px-4">
